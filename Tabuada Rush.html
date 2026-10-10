@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tabuada Rush</title>
+<style>
+:root{
+  --bg:#0A0E17; --surf:#121826; --surf2:#1B2333; --border:#262F42;
+  --text:#E7ECF5; --dim:#8C96AD; --accent:#2FE7C4; --accent-d:#17A98D;
+  --combo:#FFB648; --danger:#FF5D6C;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100%;-webkit-font-smoothing:antialiased}
+#app{max-width:520px;margin:0 auto;padding:20px 18px 40px;min-height:100vh;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.brand .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(160deg,var(--accent),var(--accent-d));display:flex;align-items:center;justify-content:center;font-weight:700;color:#06211C;font-family:var(--mono)}
+.brand h1{font-size:17px;margin:0;letter-spacing:.2px}
+.brand small{display:block;color:var(--dim);font-size:11px;margin-top:1px}
+.screen{display:none;flex:1;flex-direction:column}
+.screen.active{display:flex}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+.card{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:16px}
+.card+.card{margin-top:12px}
+.row{display:flex;gap:12px}
+.row>.card{flex:1}
+.label{color:var(--dim);font-size:12px;margin:0 0 4px}
+.big{font-family:var(--mono);font-size:26px;font-weight:700;margin:0}
+.greet{font-size:15px;color:var(--dim);margin:0 0 2px}
+.greet b{color:var(--text)}
+.xpbar{height:8px;border-radius:5px;background:var(--surf2);overflow:hidden;margin-top:10px}
+.xpbar>div{height:100%;background:linear-gradient(90deg,var(--accent-d),var(--accent));border-radius:5px;transition:width .4s ease}
+.play-btn{width:100%;padding:18px;border-radius:16px;border:none;background:var(--accent);color:#06211C;font-size:17px;font-weight:700;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+.play-btn:active{transform:scale(.98)}
+.local-note{display:flex;gap:8px;align-items:flex-start;color:var(--dim);font-size:12px;background:var(--surf);border:1px dashed var(--border);border-radius:12px;padding:10px 12px;margin-top:14px;line-height:1.5}
+/* nav */
+.navbar{display:flex;gap:6px;background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:5px;margin-bottom:16px}
+.navbar button{flex:1;background:none;border:none;color:var(--dim);padding:9px 4px;border-radius:10px;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px}
+.navbar button span{font-size:16px}
+.navbar button.active{background:var(--surf2);color:var(--text)}
+/* tabs */
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px}
+.tabs button{white-space:nowrap;background:var(--surf);border:1px solid var(--border);color:var(--dim);padding:8px 14px;border-radius:999px;font-size:13px;flex:none}
+.tabs button.active{background:var(--accent);color:#06211C;border-color:var(--accent);font-weight:700}
+/* avatar */
+.avatar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.avatar-grid button{font-size:24px;background:var(--surf2);border:2px solid transparent;border-radius:12px;height:50px}
+.avatar-grid button.sel{border-color:var(--accent)}
+.avatar-big{font-size:36px;width:60px;height:60px;border-radius:16px;background:var(--surf2);display:flex;align-items:center;justify-content:center;flex:none}
+/* onboarding */
+.onboard{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px}
+.onboard h2{margin:0 0 2px;font-size:21px}
+.onboard p{color:var(--dim);font-size:13px;margin:0 0 6px}
+.field{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:13px 14px;font-size:15px}
+.field:focus{outline:none;border-color:var(--accent)}
+.err{color:var(--danger);font-size:12px;min-height:16px}
+/* profile header */
+.pheader{display:flex;gap:12px;align-items:center;margin-bottom:4px}
+.pname{font-size:18px;font-weight:700;margin:0}
+.psub{color:var(--dim);font-size:12px;margin:2px 0 0}
+.link-btn{background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;padding:0}
+/* difficulty */
+.diff-card{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;text-align:left;width:100%}
+.diff-card:active{transform:scale(.99)}
+.diff-card h3{margin:0 0 2px;font-size:15px}
+.diff-card p{margin:0;color:var(--dim);font-size:12px;line-height:1.4}
+.diff-card .range{font-family:var(--mono);color:var(--accent);font-size:12px;margin-top:6px;display:block}
+.custom-form{display:none;flex-direction:column;gap:8px;margin-top:4px}
+.custom-form.show{display:flex}
+.num-row{display:flex;gap:8px}
+.num-row .field{text-align:center}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
+/* game screen */
+.gametop{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px}
+.pill{background:var(--surf);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-family:var(--mono);font-size:13px;display:flex;gap:6px;align-items:center}
+.pill.timer{font-size:16px}
+.pill.timer.low{color:var(--danger);border-color:var(--danger)}
+.quiz{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;position:relative}
+.feedback{position:absolute;top:-6px;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;opacity:0;transition:opacity .25s}
+.feedback.show{opacity:1}
+.feedback.ok{background:rgba(47,231,196,.14);color:var(--accent)}
+.feedback.no{background:rgba(255,93,108,.14);color:var(--danger)}
+.equation{font-family:var(--mono);font-size:56px;font-weight:700;letter-spacing:1px}
+#answer{width:160px;font-family:var(--mono);font-size:34px;text-align:center;background:var(--surf);border:2px solid var(--border);border-radius:14px;color:var(--text);padding:10px 6px}
+#answer:focus{outline:none;border-color:var(--accent)}
+.combo-line{display:flex;gap:10px;font-size:13px;color:var(--dim);font-family:var(--mono)}
+.combo-line b{color:var(--combo)}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.keypad button{height:52px;border-radius:12px;border:1px solid var(--border);background:var(--surf);color:var(--text);font-size:20px;font-family:var(--mono)}
+.keypad button:active{background:var(--surf2)}
+.exit-link{text-align:center;color:var(--dim);font-size:12px;background:none;border:none;margin-top:14px;text-decoration:underline}
+.ready-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
+.ready-wrap h2{font-size:22px;margin:0}
+.ready-wrap p{color:var(--dim);font-size:14px;max-width:320px;margin:0}
+.start-go{padding:16px 36px;border-radius:14px;border:none;background:var(--accent);color:#06211C;font-weight:700;font-size:16px}
+/* results */
+.score-hero{text-align:center;padding:18px 0 8px}
+.score-hero .num{font-family:var(--mono);font-size:48px;font-weight:700}
+.score-hero .lbl{color:var(--dim);font-size:13px}
+.badge-new{display:inline-block;margin-top:6px;background:rgba(255,182,72,.15);color:var(--combo);font-size:11px;padding:3px 10px;border-radius:999px;font-weight:600}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.insight{background:var(--surf);border-left:3px solid var(--accent);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text);line-height:1.5}
+.actions{display:flex;gap:10px;margin-top:16px}
+.actions button{flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:600}
+.btn-primary{background:var(--accent);color:#06211C;border:none}
+.btn-ghost{background:var(--surf);color:var(--text);border:1px solid var(--border)}
+.sync-line{text-align:center;font-size:12px;color:var(--dim);margin-top:10px}
+/* ranking / history rows */
+.rank-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);font-size:13px}
+.rank-row:last-child{border-bottom:none}
+.rank-row.me{background:rgba(47,231,196,.07);border-radius:10px;padding-left:8px}
+.rank-row .pos{width:20px;font-family:var(--mono);color:var(--dim)}
+.rank-row .av{font-size:18px}
+.rank-row .nm{flex:1;min-width:0}
+.rank-row .nm b{display:block;font-size:13px}
+.rank-row .nm small{color:var(--dim);font-size:11px}
+.rank-row .sc{font-family:var(--mono);font-weight:700;text-align:right}
+.rank-row .sc small{display:block;color:var(--dim);font-weight:400;font-size:10px}
+.empty-state{text-align:center;padding:30px 14px;color:var(--dim);font-size:13px;line-height:1.6}
+@media (max-width:360px){.equation{font-size:44px}#answer{width:130px;font-size:28px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="brand">
+    <div class="mark">∴</div>
+    <div><h1>TABUADA RUSH</h1><small>treino mental de velocidade</small></div>
+  </div>
+
+  <nav class="navbar" id="navbar">
+    <button data-nav="dash" class="active"><span>🏠</span>Início</button>
+    <button data-nav="ranking"><span>🏆</span>Ranking</button>
+    <button data-nav="profile"><span>👤</span>Perfil</button>
+  </nav>
+
+  <section id="screen-onboard" class="screen">
+    <div class="onboard">
+      <h2>Crie seu perfil</h2>
+      <p>Escolha um nome e um avatar para começar a treinar e acompanhar sua evolução.</p>
+      <input class="field" id="obName" maxlength="18" placeholder="Nome de jogador">
+      <div class="avatar-grid" id="obAvatars"></div>
+      <p class="err" id="obErr"></p>
+      <button class="start-go" id="obCreate">Criar perfil</button>
+    </div>
+  </section>
+
+  <section id="screen-dashboard" class="screen active">
+    <div class="card">
+      <p class="greet" id="greet">Olá!</p>
+      <p class="big" id="dashLevel">Nível 1</p>
+      <div class="xpbar"><div id="xpFill" style="width:0%"></div></div>
+      <p class="label" id="xpText" style="margin-top:6px">0 XP</p>
+    </div>
+    <div class="row">
+      <div class="card"><p class="label">Melhor pontuação</p><p class="big" id="dashBest">0</p></div>
+      <div class="card"><p class="label">Precisão recente</p><p class="big" id="dashAcc">—</p></div>
+    </div>
+    <div class="row">
+      <div class="card"><p class="label">Melhor combo</p><p class="big" id="dashCombo">0</p></div>
+      <div class="card"><p class="label">Dias seguidos</p><p class="big" id="dashStreak">0</p></div>
+    </div>
+    <button class="play-btn" id="btnPlay">▶ Jogar Rush 60s</button>
+    <div class="local-note">💾 Seu perfil fica salvo neste navegador, e suas melhores pontuações sincronizam com o ranking compartilhado deste artefato quando possível (veja a aba Ranking).</div>
+  </section>
+
+  <section id="screen-difficulty" class="screen">
+    <h2 style="margin:0 0 4px;font-size:19px">Escolha a dificuldade</h2>
+    <p style="color:var(--dim);font-size:13px;margin:0 0 14px">Ela define o intervalo de multiplicações da partida.</p>
+    <div id="diffCards"></div>
+    <div class="card custom-form" id="customForm">
+      <p class="label">Intervalo personalizado</p>
+      <div class="num-row">
+        <input class="field" id="custMin" type="number" min="1" max="50" value="1" placeholder="Mín">
+        <input class="field" id="custMax" type="number" min="1" max="50" value="10" placeholder="Máx">
+      </div>
+      <label class="chk"><input type="checkbox" id="custPrio"> Priorizar minhas combinações mais difíceis</label>
+      <p class="err" id="custErr"></p>
+      <button class="start-go" id="custConfirm" style="margin-top:4px">Confirmar e continuar</button>
+    </div>
+  </section>
+
+  <section id="screen-ready" class="screen">
+    <div class="ready-wrap">
+      <h2>Rush 60 segundos</h2>
+      <p id="readyDesc">Resolva o máximo de multiplicações possível em 60s.</p>
+      <button class="start-go" id="btnStart">Começar</button>
+    </div>
+  </section>
+
+  <section id="screen-game" class="screen">
+    <div class="gametop">
+      <span class="pill timer" id="timerPill">60</span>
+      <span class="pill" id="diffPill">Normal</span>
+      <span class="pill" id="scorePill">0 pts</span>
+    </div>
+    <div class="quiz">
+      <div class="feedback" id="feedback"></div>
+      <div class="equation" id="equation">? × ?</div>
+      <div class="answer-wrap">
+        <input id="answer" inputmode="numeric" autocomplete="off" aria-label="Sua resposta" maxlength="5">
+      </div>
+      <div class="combo-line"><span>Combo <b id="comboVal">x1</b></span><span id="accLine">0/0 acertos</span></div>
+      <div class="keypad" id="keypad"></div>
+    </div>
+    <button class="exit-link" id="btnExit">Abandonar partida</button>
+  </section>
+
+  <section id="screen-results" class="screen">
+    <div class="score-hero">
+      <div class="lbl">PONTUAÇÃO FINAL · <span id="resDiff">Normal</span></div>
+      <div class="num" id="resScore">0</div>
+      <div id="resNewBadge"></div>
+    </div>
+    <div class="stat-grid">
+      <div class="card"><p class="label">Acertos</p><p class="big" id="resCorrect">0</p></div>
+      <div class="card"><p class="label">Erros</p><p class="big" id="resWrong">0</p></div>
+      <div class="card"><p class="label">Precisão</p><p class="big" id="resAcc">0%</p></div>
+      <div class="card"><p class="label">Tempo médio</p><p class="big" id="resAvg">0s</p></div>
+      <div class="card"><p class="label">Maior combo</p><p class="big" id="resCombo">0</p></div>
+      <div class="card"><p class="label">XP ganho</p><p class="big" id="resXp">+0</p></div>
+    </div>
+    <div class="insight" id="resInsight" style="margin-top:12px"></div>
+    <p class="sync-line" id="resSync"></p>
+    <div class="actions">
+      <button class="btn-ghost" id="btnDash">Painel</button>
+      <button class="btn-primary" id="btnAgain">Jogar de novo</button>
+    </div>
+  </section>
+
+  <section id="screen-profile" class="screen">
+    <div class="card" id="profileHead"></div>
+    <div class="tabs" id="profTabs">
+      <button data-tab="overview" class="active">Visão geral</button>
+      <button data-tab="stats">Estatísticas</button>
+      <button data-tab="history">Histórico</button>
+    </div>
+    <div id="profContent"></div>
+  </section>
+
+  <section id="screen-ranking" class="screen">
+    <h2 style="margin:0 0 12px;font-size:19px">Ranking</h2>
+    <div class="tabs" id="rankTabs">
+      <button data-tab="pessoal" class="active">Pessoal</button>
+      <button data-tab="global">Global</button>
+      <button data-tab="diario">Diário</button>
+      <button data-tab="semanal">Semanal</button>
+      <button data-tab="mensal">Mensal</button>
+      <button data-tab="amigos">Amigos</button>
+    </div>
+    <div class="card" id="rankContent"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+var KEY='tabuadaRush_v1';
+var AVATARS=['🦊','🐼','🦉','🐸','🦁','🐯','🐢','🦅'];
+function defaultProfile(){return{username:null,avatar:null,createdAt:null,xp:0,gamesPlayed:0,bestScore:0,bestStreak:0,bestAccuracy:0,streakDays:0,lastPlayedDate:null,pairStats:{},history:[],bestByDiff:{}};}
+function loadProfile(){try{var raw=localStorage.getItem(KEY);if(!raw)return defaultProfile();var p=JSON.parse(raw);return Object.assign(defaultProfile(),p);}catch(e){return defaultProfile();}}
+function saveProfile(p){try{localStorage.setItem(KEY,JSON.stringify(p));}catch(e){}}
+var profile=loadProfile();
+
+function q(s){return document.querySelector(s);}
+function qa(s){return Array.prototype.slice.call(document.querySelectorAll(s));}
+function escapeHtml(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+var screens={onboard:q('#screen-onboard'),dash:q('#screen-dashboard'),difficulty:q('#screen-difficulty'),ready:q('#screen-ready'),game:q('#screen-game'),results:q('#screen-results'),profile:q('#screen-profile'),ranking:q('#screen-ranking')};
+function show(name){for(var k in screens)screens[k].classList.toggle('active',k===name);q('#navbar').style.display=(name==='onboard')?'none':'flex';}
+function levelFromXp(xp){return Math.floor(xp/100)+1;}
+
+var DIFFS={
+  facil:{label:'Fácil',sub:'Iniciante',min:1,max:5,bonus:1,desc:'Números de 1 a 5. Ritmo confortável, foco em precisão.'},
+  normal:{label:'Normal',sub:'Intermediário',min:1,max:10,bonus:1.3,desc:'Tabuada tradicional completa. Equilíbrio entre velocidade e precisão.'},
+  dificil:{label:'Difícil',sub:'Avançado',min:6,max:12,bonus:1.6,desc:'Combinações mais desafiadoras, exige rapidez.'},
+  insano:{label:'Insano',sub:'Especialista',min:11,max:20,bonus:2.2,desc:'Multiplicadores de 11 a 20, como 14×17 ou 16×18.'},
+  custom:{label:'Personalizado',sub:'Sua escolha',min:1,max:10,bonus:1.3,desc:'Defina seu próprio intervalo de multiplicadores.'}
+};
+var DIFF_ORDER=['facil','normal','dificil','insano'];
+var state={selDiff:'normal',diffMin:1,diffMax:10,diffBonus:1.3,prioWeak:false};
+
+// ---------- date keys (UTC, so the shared ranking is consistent across time zones) ----------
+function dayKeyOf(d){return d.toISOString().slice(0,10);}
+function monthKeyOf(d){return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0');}
+function weekKeyOf(d){
+  var dt=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));
+  var day=(dt.getUTCDay()+6)%7; dt.setUTCDate(dt.getUTCDate()-day+3);
+  var firstThu=dt.getTime();
+  dt.setUTCMonth(0,1);
+  if(dt.getUTCDay()!==4)dt.setUTCMonth(0,1+((4-dt.getUTCDay()+7)%7));
+  var wk=1+Math.round((firstThu-dt.getTime())/(7*864e5));
+  return dt.getUTCFullYear()+'-W'+String(wk).padStart(2,'0');
+}
+
+// ---------- onboarding ----------
+function buildAvatarGrid(container,selected,onPick){
+  container.innerHTML='';
+  AVATARS.forEach(function(av){
+    var b=document.createElement('button');
+    b.textContent=av;
+    b.type='button';
+    if(av===selected)b.classList.add('sel');
+    b.addEventListener('click',function(){
+      qa('#'+container.id+' button').forEach(function(x){x.classList.remove('sel');});
+      b.classList.add('sel');
+      onPick(av);
+    });
+    container.appendChild(b);
+  });
+}
+var obAvatar=AVATARS[0];
+buildAvatarGrid(q('#obAvatars'),obAvatar,function(av){obAvatar=av;});
+q('#obCreate').addEventListener('click',function(){
+  var name=q('#obName').value.trim();
+  if(name.length<2||name.length>18){q('#obErr').textContent='Use um nome entre 2 e 18 caracteres.';return;}
+  profile.username=name;profile.avatar=obAvatar;profile.createdAt=new Date().toISOString();
+  saveProfile(profile);
+  renderDash();show('dash');
+});
+
+// ---------- dashboard ----------
+function renderDash(){
+  var h=new Date().getHours();
+  q('#greet').innerHTML=(h<12?'Bom dia':h<18?'Boa tarde':'Boa noite')+', <b>'+(profile.avatar||'')+' '+escapeHtml(profile.username||'jogador')+'</b>';
+  var lvl=levelFromXp(profile.xp);
+  q('#dashLevel').textContent='Nível '+lvl;
+  var within=profile.xp%100;
+  q('#xpFill').style.width=within+'%';
+  q('#xpText').textContent=profile.xp+' XP total · '+(100-within)+' para o próximo nível';
+  q('#dashBest').textContent=profile.bestScore;
+  q('#dashAcc').textContent=profile.bestAccuracy?Math.round(profile.bestAccuracy*100)+'%':'—';
+  q('#dashCombo').textContent=profile.bestStreak;
+  q('#dashStreak').textContent=profile.streakDays;
+}
+
+// ---------- difficulty screen ----------
+function buildDiffCards(){
+  var c=q('#diffCards');c.innerHTML='';
+  ['facil','normal','dificil','insano','custom'].forEach(function(key){
+    var d=DIFFS[key];
+    var b=document.createElement('button');
+    b.className='diff-card';
+    b.innerHTML='<h3>'+d.label+' — '+d.sub+'</h3><p>'+d.desc+'</p><span class="range">'+(key==='custom'?'min–máx à sua escolha':d.min+'–'+d.max)+'</span>';
+    b.addEventListener('click',function(){
+      if(key==='custom'){q('#customForm').classList.add('show');b.scrollIntoView({block:'nearest'});return;}
+      q('#customForm').classList.remove('show');
+      state.selDiff=key;state.diffMin=d.min;state.diffMax=d.max;state.diffBonus=d.bonus;state.prioWeak=false;
+      goReady();
+    });
+    c.appendChild(b);
+  });
+}
+q('#custConfirm').addEventListener('click',function(){
+  var min=parseInt(q('#custMin').value,10),max=parseInt(q('#custMax').value,10);
+  if(!(min>=1&&max<=50&&min<=max)){q('#custErr').textContent='Use um intervalo válido entre 1 e 50, com mínimo ≤ máximo.';return;}
+  q('#custErr').textContent='';
+  state.selDiff='custom';state.diffMin=min;state.diffMax=max;
+  state.diffBonus=Math.min(1+(max-min)/40,2.5);
+  state.prioWeak=q('#custPrio').checked;
+  goReady();
+});
+function goReady(){
+  var d=DIFFS[state.selDiff];
+  var label=state.selDiff==='custom'?d.label:d.label+' ('+d.sub+')';
+  q('#readyDesc').textContent='Dificuldade: '+label+' · multiplicações de '+state.diffMin+' a '+state.diffMax+'. Acerte o máximo possível em 60 segundos.';
+  show('ready');
+}
+
+// ---------- game engine ----------
+var G=null;
+function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function weakPairs(min,max){
+  var out=[];
+  for(var k in profile.pairStats){
+    var s=profile.pairStats[k];
+    if(s.attempts>=3){
+      var parts=k.split('x').map(Number);
+      if(parts[0]>=min&&parts[0]<=max&&parts[1]>=min&&parts[1]<=max&&(s.correct/s.attempts)<0.6)out.push(k);
+    }
+  }
+  return out;
+}
+function nextQuestion(){
+  var a,b,key;
+  var weak=weakPairs(G.min,G.max);
+  var prob=G.prioWeak?0.6:0.35;
+  if(weak.length&&Math.random()<prob){
+    var pick=weak[randInt(0,weak.length-1)].split('x').map(Number);a=pick[0];b=pick[1];
+  }else{a=randInt(G.min,G.max);b=randInt(G.min,G.max);}
+  key=a+'x'+b;
+  if(key===G.prevKey){b=b===G.max?G.min:b+1;key=a+'x'+b;}
+  G.prevKey=key;G.a=a;G.b=b;G.qStart=Date.now();
+  q('#equation').textContent=a+' × '+b;
+  q('#answer').value='';
+}
+function flashFeedback(ok,correctAnswer){
+  var f=q('#feedback');
+  f.textContent=ok?'Correto!':'Era '+correctAnswer;
+  f.className='feedback show '+(ok?'ok':'no');
+  setTimeout(function(){f.className='feedback';},380);
+}
+var locked=false;
+function submitAnswer(){
+  if(locked||!G||G.state!=='PLAYING')return;
+  var val=q('#answer').value.trim();
+  if(val==='')return;
+  locked=true;
+  var ms=Date.now()-G.qStart;
+  var correctAnswer=G.a*G.b;
+  var isCorrect=parseInt(val,10)===correctAnswer;
+  var key=G.a+'x'+G.b;
+  if(!profile.pairStats[key])profile.pairStats[key]={attempts:0,correct:0,totalMs:0};
+  var ps=profile.pairStats[key];
+  ps.attempts++;ps.totalMs+=ms;if(isCorrect)ps.correct++;
+  if(isCorrect){
+    G.combo++;G.bestCombo=Math.max(G.bestCombo,G.combo);G.correct++;
+    var comboMult=Math.min(1+G.combo*0.1,3);
+    G.score+=Math.round(10*G.bonus*comboMult);
+  }else{G.combo=0;G.wrong++;}
+  G.totalMs+=ms;G.answered++;
+  flashFeedback(isCorrect,correctAnswer);
+  q('#scorePill').textContent=G.score+' pts';
+  q('#comboVal').textContent='x'+Math.min(1+G.combo,99);
+  q('#accLine').textContent=G.correct+'/'+G.answered+' acertos';
+  nextQuestion();
+  setTimeout(function(){locked=false;q('#answer').focus();},120);
+}
+var rafId=null;
+function timerTick(){
+  if(!G||G.state!=='PLAYING')return;
+  var remain=60000-(Date.now()-G.startTime);
+  if(remain<=0){finishGame();return;}
+  var secs=Math.ceil(remain/1000);
+  var pill=q('#timerPill');
+  pill.textContent=secs;
+  pill.classList.toggle('low',secs<=10);
+  rafId=requestAnimationFrame(timerTick);
+}
+function startGame(){
+  G={state:'PLAYING',min:state.diffMin,max:state.diffMax,bonus:state.diffBonus,diffKey:state.selDiff,prioWeak:state.prioWeak,
+     score:0,correct:0,wrong:0,answered:0,combo:0,bestCombo:0,totalMs:0,prevKey:null,startTime:Date.now()};
+  show('game');
+  q('#diffPill').textContent=DIFFS[state.selDiff].label;
+  q('#scorePill').textContent='0 pts';
+  q('#comboVal').textContent='x1';
+  q('#accLine').textContent='0/0 acertos';
+  nextQuestion();
+  q('#answer').focus();
+  timerTick();
+}
+
+// ---------- cloud sync (Artifact db capability = the shared backend) ----------
+async function syncToCloud(diffKey,result){
+  try{
+    if(!window.claude||!window.claude.use)return{ok:false,reason:'no-runtime'};
+    var db=await window.claude.use('db');
+    var user=await window.claude.use('user');
+    if(!db||!user)return{ok:false,reason:'unavailable'};
+    var uid=await user.id();
+    if(!uid)return{ok:false,reason:'signed-out'};
+    var ref=db.collection('scores').doc(uid);
+    var snap=await ref.get();
+    var cur=snap.exists?snap.data():{};
+    var now=new Date();
+    var dayKey=dayKeyOf(now),weekKey=weekKeyOf(now),monthKey=monthKeyOf(now);
+    var body={
+      username:(profile.username||'Jogador').slice(0,18),
+      avatar:profile.avatar||'🙂',
+      updatedAt:now.toISOString(),
+      gamesPlayed:(cur.gamesPlayed||0)+1,
+      allTimeBest:Math.max(cur.allTimeBest||0,result.score),
+      allTimeAcc:Math.max(cur.allTimeAcc||0,result.accuracy),
+      allTimeDiff:result.score>=(cur.allTimeBest||0)?diffKey:(cur.allTimeDiff||diffKey),
+      dayKey:dayKey,
+      dailyBest:cur.dayKey===dayKey?Math.max(cur.dailyBest||0,result.score):result.score,
+      dailyAcc:cur.dayKey===dayKey?Math.max(cur.dailyAcc||0,result.accuracy):result.accuracy,
+      weekKey:weekKey,
+      weeklyBest:cur.weekKey===weekKey?Math.max(cur.weeklyBest||0,result.score):result.score,
+      weeklyAcc:cur.weekKey===weekKey?Math.max(cur.weeklyAcc||0,result.accuracy):result.accuracy,
+      monthKey:monthKey,
+      monthlyBest:cur.monthKey===monthKey?Math.max(cur.monthlyBest||0,result.score):result.score,
+      monthlyAcc:cur.monthKey===monthKey?Math.max(cur.monthlyAcc||0,result.accuracy):result.accuracy
+    };
+    await ref.set(body);
+    return{ok:true};
+  }catch(e){return{ok:false,reason:(e&&e.code)||'error'};}
+}
+
+function finishGame(){
+  G.state='FINISHED';
+  cancelAnimationFrame(rafId);
+  var accuracy=G.answered?G.correct/G.answered:0;
+  var avgMs=G.answered?G.totalMs/G.answered:0;
+  var xpGained=Math.round(G.score/10)+G.correct*2;
+
+  var isNewScore=G.score>profile.bestScore;
+  var isNewCombo=G.bestCombo>profile.bestStreak;
+  profile.bestScore=Math.max(profile.bestScore,G.score);
+  profile.bestStreak=Math.max(profile.bestStreak,G.bestCombo);
+  profile.bestAccuracy=Math.max(profile.bestAccuracy,accuracy);
+  profile.xp+=xpGained;
+  profile.gamesPlayed++;
+
+  if(!profile.bestByDiff[G.diffKey])profile.bestByDiff[G.diffKey]={bestScore:0,bestAccuracy:0,bestCombo:0,games:0};
+  var bd=profile.bestByDiff[G.diffKey];
+  bd.bestScore=Math.max(bd.bestScore,G.score);
+  bd.bestAccuracy=Math.max(bd.bestAccuracy,accuracy);
+  bd.bestCombo=Math.max(bd.bestCombo,G.bestCombo);
+  bd.games++;
+
+  var today=dayKeyOf(new Date());
+  if(profile.lastPlayedDate!==today){
+    var yest=dayKeyOf(new Date(Date.now()-86400000));
+    profile.streakDays=(profile.lastPlayedDate===yest)?profile.streakDays+1:1;
+    profile.lastPlayedDate=today;
+  }
+  profile.history.unshift({date:new Date().toISOString(),mode:'rush60',diff:G.diffKey,score:G.score,accuracy:accuracy,correct:G.correct,wrong:G.wrong,bestCombo:G.bestCombo,xp:xpGained});
+  profile.history=profile.history.slice(0,30);
+  saveProfile(profile);
+
+  q('#resDiff').textContent=DIFFS[G.diffKey].label;
+  q('#resScore').textContent=G.score;
+  q('#resNewBadge').innerHTML=isNewScore?'<span class="badge-new">★ Novo recorde pessoal</span>':'';
+  q('#resCorrect').textContent=G.correct;
+  q('#resWrong').textContent=G.wrong;
+  q('#resAcc').textContent=Math.round(accuracy*100)+'%';
+  q('#resAvg').textContent=(avgMs/1000).toFixed(1)+'s';
+  q('#resCombo').textContent=G.bestCombo+(isNewCombo?' 🔥':'');
+  q('#resXp').textContent='+'+xpGained;
+
+  var insight='Boa partida! Continue treinando para subir de nível.';
+  var worst=null,worstAcc=1;
+  for(var k in profile.pairStats){
+    var s=profile.pairStats[k];
+    if(s.attempts>=3){var a=s.correct/s.attempts;if(a<worstAcc){worstAcc=a;worst=k;}}
+  }
+  if(worst&&worstAcc<0.75){
+    insight='Vale reforçar '+worst.replace('x',' × ')+', onde sua taxa de acerto ainda é de '+Math.round(worstAcc*100)+'%.';
+  }
+  var idx=DIFF_ORDER.indexOf(G.diffKey);
+  if(accuracy>=0.9&&avgMs<2800&&idx>=0&&idx<DIFF_ORDER.length-1){
+    insight+=' Seu desempenho está ótimo — que tal tentar a dificuldade "'+DIFFS[DIFF_ORDER[idx+1]].label+'" na próxima partida?';
+  }else if(accuracy<0.5&&idx>0){
+    insight+=' Se estiver difícil, a dificuldade "'+DIFFS[DIFF_ORDER[idx-1]].label+'" pode ajudar a treinar com mais confiança.';
+  }
+  q('#resInsight').textContent=insight;
+  show('results');
+
+  q('#resSync').textContent='Sincronizando com o ranking global…';
+  syncToCloud(G.diffKey,{score:G.score,accuracy:accuracy,bestCombo:G.bestCombo}).then(function(r){
+    if(r.ok){q('#resSync').textContent='✓ Sincronizado com o ranking global';}
+    else if(r.reason==='signed-out'){q('#resSync').textContent='Entre na sua conta para aparecer no ranking global. Resultado salvo localmente.';}
+    else{q('#resSync').textContent='Ranking global indisponível agora — resultado salvo localmente.';}
+  });
+}
+
+// keypad
+(function(){
+  var keys=['1','2','3','4','5','6','7','8','9','⌫','0','↵'];
+  var kp=q('#keypad');
+  keys.forEach(function(k){
+    var b=document.createElement('button');
+    b.textContent=k;
+    b.addEventListener('click',function(){
+      var inp=q('#answer');
+      if(k==='⌫')inp.value=inp.value.slice(0,-1);
+      else if(k==='↵')submitAnswer();
+      else if(inp.value.length<5)inp.value+=k;
+      inp.focus();
+    });
+    kp.appendChild(b);
+  });
+})();
+q('#answer').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){e.preventDefault();submitAnswer();}
+});
+q('#btnPlay').addEventListener('click',function(){buildDiffCards();q('#customForm').classList.remove('show');show('difficulty');});
+q('#btnStart').addEventListener('click',startGame);
+q('#btnExit').addEventListener('click',function(){
+  if(confirm('Abandonar a partida atual? O progresso desta rodada será perdido.')){
+    G.state='CANCELLED';cancelAnimationFrame(rafId);renderDash();show('dash');
+  }
+});
+q('#btnDash').addEventListener('click',function(){renderDash();show('dash');});
+q('#btnAgain').addEventListener('click',function(){buildDiffCards();q('#customForm').classList.remove('show');show('difficulty');});
+
+// ---------- profile screen ----------
+var profEditing=false, profEditAvatar=null;
+function renderProfileHead(){
+  var lvl=levelFromXp(profile.xp);
+  var within=profile.xp%100;
+  if(!profEditing){
+    q('#profileHead').innerHTML=
+      '<div class="pheader"><div class="avatar-big">'+(profile.avatar||'🙂')+'</div>'+
+      '<div><p class="pname">'+escapeHtml(profile.username||'Jogador')+'</p>'+
+      '<p class="psub">Nível '+lvl+' · '+profile.xp+' XP · desde '+(profile.createdAt?new Date(profile.createdAt).toLocaleDateString('pt-BR'):'—')+'</p>'+
+      '<button class="link-btn" id="btnEditProf" style="margin-top:6px">Editar perfil</button></div></div>'+
+      '<div class="xpbar" style="margin-top:12px"><div style="width:'+within+'%"></div></div>';
+    q('#btnEditProf').addEventListener('click',function(){profEditing=true;profEditAvatar=profile.avatar;renderProfileHead();});
+  }else{
+    q('#profileHead').innerHTML='<p class="label">Editar perfil</p><input class="field" id="editName" maxlength="18" value="'+escapeHtml(profile.username||'')+'"><div class="avatar-grid" id="editAvatars"></div><p class="err" id="editErr"></p><div class="actions"><button class="btn-ghost" id="editCancel">Cancelar</button><button class="btn-primary" id="editSave">Salvar</button></div>';
+    buildAvatarGrid(q('#editAvatars'),profEditAvatar,function(av){profEditAvatar=av;});
+    q('#editCancel').addEventListener('click',function(){profEditing=false;renderProfileHead();});
+    q('#editSave').addEventListener('click',function(){
+      var name=q('#editName').value.trim();
+      if(name.length<2||name.length>18){q('#editErr').textContent='Use um nome entre 2 e 18 caracteres.';return;}
+      profile.username=name;profile.avatar=profEditAvatar;saveProfile(profile);
+      profEditing=false;renderProfileHead();renderDash();
+    });
+  }
+}
+function fmtDate(iso){var d=new Date(iso);return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function renderProfTab(tab){
+  var c=q('#profContent');
+  if(tab==='overview'){
+    var totalQ=0;for(var k in profile.pairStats)totalQ+=profile.pairStats[k].attempts;
+    c.innerHTML='<div class="row"><div class="card"><p class="label">Melhor pontuação</p><p class="big">'+profile.bestScore+'</p></div><div class="card"><p class="label">Partidas</p><p class="big">'+profile.gamesPlayed+'</p></div></div>'+
+      '<div class="row"><div class="card"><p class="label">Maior combo</p><p class="big">'+profile.bestStreak+'</p></div><div class="card"><p class="label">Questões respondidas</p><p class="big">'+totalQ+'</p></div></div>';
+  }else if(tab==='stats'){
+    var html='';
+    DIFF_ORDER.concat(['custom']).forEach(function(key){
+      var bd=profile.bestByDiff[key];
+      if(!bd)return;
+      html+='<div class="rank-row"><span class="av"></span><span class="nm"><b>'+DIFFS[key].label+'</b><small>'+bd.games+' partida(s) · precisão '+Math.round(bd.bestAccuracy*100)+'%</small></span><span class="sc">'+bd.bestScore+'<small>combo '+bd.bestCombo+'</small></span></div>';
+    });
+    var dominated=0;for(var k2 in profile.pairStats){var s=profile.pairStats[k2];if(s.attempts>=5&&(s.correct/s.attempts)>=0.85)dominated++;}
+    c.innerHTML=(html||'<div class="empty-state">Jogue uma partida para ver suas estatísticas por dificuldade.</div>')+
+      '<div class="card" style="margin-top:12px"><p class="label">Combinações dominadas</p><p class="big">'+dominated+'</p></div>';
+  }else{
+    if(!profile.history.length){c.innerHTML='<div class="empty-state">Nenhuma partida registrada ainda. Jogue uma rodada de Rush 60s para começar seu histórico.</div>';return;}
+    var h='';
+    profile.history.slice(0,15).forEach(function(m){
+      h+='<div class="rank-row"><span class="nm"><b>'+DIFFS[m.diff].label+'</b><small>'+fmtDate(m.date)+'</small></span><span class="sc">'+m.score+'<small>'+Math.round(m.accuracy*100)+'% acerto</small></span></div>';
+    });
+    c.innerHTML='<div class="card">'+h+'</div>';
+  }
+}
+function setupTabGroup(sel,onChange){
+  qa(sel+' button').forEach(function(b){
+    b.addEventListener('click',function(){
+      qa(sel+' button').forEach(function(x){x.classList.remove('active');});
+      b.classList.add('active');
+      onChange(b.dataset.tab);
+    });
+  });
+}
+setupTabGroup('#profTabs',renderProfTab);
+setupTabGroup('#rankTabs',renderRankTab);
+
+// ---------- ranking screen ----------
+function rankEmpty(msg){q('#rankContent').innerHTML='<div class="empty-state">'+msg+'</div>';}
+function rankRowHtml(pos,avatar,username,sub,scoreVal,scoreSub,isMe){
+  return '<div class="rank-row'+(isMe?' me':'')+'"><span class="pos">'+pos+'</span><span class="av">'+escapeHtml(avatar||'🙂')+'</span>'+
+    '<span class="nm"><b>'+escapeHtml(username||'Jogador')+(isMe?' (você)':'')+'</b><small>'+escapeHtml(sub)+'</small></span>'+
+    '<span class="sc">'+scoreVal+'<small>'+escapeHtml(scoreSub)+'</small></span></div>';
+}
+function renderList(rows,bestField,accField,myId,emptyMsg){
+  if(!rows.length){rankEmpty(emptyMsg);return;}
+  var h='';
+  rows.forEach(function(r,i){
+    var d=r.data;
+    h+=rankRowHtml(i+1,d.avatar,d.username,d.gamesPlayed?d.gamesPlayed+' partida(s)':'',d[bestField]||0,Math.round((d[accField]||0)*100)+'% acerto',r.id===myId);
+  });
+  q('#rankContent').innerHTML=h;
+}
+async function renderRankTab(tab){
+  if(tab==='pessoal'){
+    var entries=[];
+    for(var k in profile.bestByDiff){entries.push({key:k,bd:profile.bestByDiff[k]});}
+    if(!entries.length){rankEmpty('Você ainda não concluiu nenhuma partida válida. Jogue uma rodada de Rush 60s para aparecer aqui.');return;}
+    entries.sort(function(a,b){return b.bd.bestScore-a.bd.bestScore;});
+    var h='<p class="label" style="margin-bottom:10px">Seus melhores resultados por dificuldade neste dispositivo/conta.</p>';
+    entries.forEach(function(e,i){
+      h+=rankRowHtml(i+1,profile.avatar,DIFFS[e.key].label,e.bd.games+' partida(s)',e.bd.bestScore,Math.round(e.bd.bestAccuracy*100)+'% acerto',false);
+    });
+    q('#rankContent').innerHTML=h;
+    return;
+  }
+  if(tab==='amigos'){rankEmpty('Sistema de amigos ainda não implementado nesta versão.');return;}
+  q('#rankContent').innerHTML='<div class="empty-state">Carregando ranking…</div>';
+  try{
+    if(!window.claude||!window.claude.use){rankEmpty('Este ranking compartilhado só funciona quando a página é aberta como artefato publicado do Claude. Veja a aba Pessoal enquanto isso.');return;}
+    var db=await window.claude.use('db');
+    if(!db){rankEmpty('O ranking compartilhado não está disponível para você nesta visualização (pode exigir acesso de Colaborador ao artefato). Veja a aba Pessoal enquanto isso — nenhum dado é inventado aqui.');return;}
+    var user=await window.claude.use('user');
+    var myId=user?await user.id():null;
+    var now=new Date();
+    if(tab==='global'){
+      var snap=await db.collection('scores').orderBy('allTimeBest','desc').limit(50).get();
+      var rows=snap.docs.map(function(d){return{id:d.id,data:d.data()};});
+      renderList(rows,'allTimeBest','allTimeAcc',myId,'Ainda não há resultados válidos no ranking global. Jogue uma partida para ser o primeiro!');
+    }else{
+      var field=tab==='diario'?'dayKey':tab==='semanal'?'weekKey':'monthKey';
+      var keyVal=tab==='diario'?dayKeyOf(now):tab==='semanal'?weekKeyOf(now):monthKeyOf(now);
+      var bestField=tab==='diario'?'dailyBest':tab==='semanal'?'weeklyBest':'monthlyBest';
+      var accField=tab==='diario'?'dailyAcc':tab==='semanal'?'weeklyAcc':'monthlyAcc';
+      var snap2=await db.collection('scores').where(field,'==',keyVal).limit(100).get();
+      var rows2=snap2.docs.map(function(d){return{id:d.id,data:d.data()};});
+      rows2.sort(function(a,b){return (b.data[bestField]||0)-(a.data[bestField]||0);});
+      rows2=rows2.slice(0,30);
+      var labels={diario:'de hoje',semanal:'desta semana',mensal:'deste mês'};
+      renderList(rows2,bestField,accField,myId,'Ainda não há resultados válidos no ranking '+labels[tab]+'. Jogue uma partida para ser o primeiro!');
+    }
+  }catch(e){
+    rankEmpty('Não foi possível carregar o ranking agora ('+((e&&e.code)||'erro')+'). Tente novamente em instantes.');
+  }
+}
+
+// ---------- nav ----------
+qa('#navbar button').forEach(function(b){
+  b.addEventListener('click',function(){
+    qa('#navbar button').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    var n=b.dataset.nav;
+    if(n==='dash'){renderDash();show('dash');}
+    else if(n==='profile'){renderProfileHead();renderProfTab('overview');qa('#profTabs button').forEach(function(x,i){x.classList.toggle('active',i===0);});show('profile');}
+    else if(n==='ranking'){renderRankTab('pessoal');qa('#rankTabs button').forEach(function(x,i){x.classList.toggle('active',i===0);});show('ranking');}
+  });
+});
+
+// ---------- boot ----------
+if(!profile.username){show('onboard');}
+else{renderDash();show('dash');}
+})();
+</script>
+</body>
+</html>
